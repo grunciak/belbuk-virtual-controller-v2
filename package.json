@@ -1,0 +1,22 @@
+{
+  "name": "belbuk-virtual-controller",
+  "version": "1.0.0",
+  "description": "Virtual controller simulator for Belbuk Data Broker",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node src/index.js",
+    "dev": "node --watch src/index.js"
+  },
+  "dependencies": {
+    "@apollo/server": "^4.11.0",
+    "graphql": "^16.9.0",
+    "graphql-ws": "^5.16.0",
+    "graphql-subscriptions": "^2.0.0",
+    "ws": "^8.18.0",
+    "uuid": "^10.0.0",
+    "cors": "^2.8.5",
+    "express": "^4.21.0",
+    "body-parser": "^1.20.3",
+    "@graphql-tools/schema": "^10.0.0"
+  }
+}
