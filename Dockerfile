@@ -3,5 +3,6 @@ WORKDIR /app
 COPY package*.json ./
 RUN npm ci --production
 COPY src/ ./src/
-EXPOSE 2001
+ENV PORT=2001
+EXPOSE $PORT
 CMD ["node", "src/index.js"]
