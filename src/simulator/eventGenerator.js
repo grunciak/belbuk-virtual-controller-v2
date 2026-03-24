@@ -32,7 +32,9 @@ function generateEvent() {
   state.unconfirmedEvents.push(event);
 
   if (pubsub) {
-    pubsub.publish('CONTROLLER_EVENTS', { events: [event] });
+    const payload = { events: [event] };
+    console.log('[Event] Publishing payload:', JSON.stringify(payload, null, 2));
+    pubsub.publish('CONTROLLER_EVENTS', payload);
   }
 
   console.log(`[Event] Generated: ${eventType.symbol} (${eventType.desc}) - event #${event.id}`);
