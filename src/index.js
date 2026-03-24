@@ -26,17 +26,40 @@ async function start() {
   const app = express();
   const httpServer = createServer(app);
 
-  // Wrap execute to log errors in subscription responses
-  const wrappedExecute = async (...args) => {
-    const result = await execute(...args);
-    if (result.errors) {
-      console.error('[Subscription] GraphQL execution errors:', JSON.stringify(result.errors, null, 2));
+  // Wrap subscribe to intercept and log subscription data
+  const wrappedSubscribe = async (...args) => {
+    const result = await subscribe(...args);
+
+    // If it's an async iterator, wrap it to log each value
+    if (result[Symbol.asyncIterator]) {
+      const originalIterator = result[Symbol.asyncIterator]();
+      return {
+        [Symbol.asyncIterator]() {
+          return {
+            async next() {
+              const { value, done } = await originalIterator.next();
+              if (value) {
+                console.log('[Subscription] Raw subscription value:', JSON.stringify(value, null, 2).substring(0, 500));
+                if (value.errors) {
+                  console.error('[Subscription] ERRORS in subscription data:', JSON.stringify(value.errors));
+                }
+                if (value.data && value.data.events === null) {
+                  console.error('[Subscription] events is NULL!');
+                }
+              }
+              return { value, done };
+            },
+            return() {
+              return originalIterator.return ? originalIterator.return() : { value: undefined, done: true };
+            }
+          };
+        }
+      };
     }
-    if (result.data) {
-      console.log('[Subscription] GraphQL execution data keys:', Object.keys(result.data));
-      if (result.data.events === null) {
-        console.error('[Subscription] events is NULL in response!');
-      }
+
+    // If it's an error result
+    if (result.errors) {
+      console.error('[Subscription] Subscribe returned errors:', JSON.stringify(result.errors));
     }
     return result;
   };
@@ -46,8 +69,8 @@ async function start() {
   const subscriptionServer = SubscriptionServer.create(
     {
       schema,
-      execute: wrappedExecute,
-      subscribe,
+      execute,
+      subscribe: wrappedSubscribe,
       keepAlive: 10000, // Send keep-alive every 10s (Apollo Client Java expects heartbeat)
       onConnect: (connectionParams, webSocket) => {
         console.log('[Subscription] Client connected via WebSocket');
