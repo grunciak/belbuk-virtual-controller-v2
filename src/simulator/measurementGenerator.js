@@ -1,7 +1,7 @@
 const { state } = require('./state');
 
 function randomNoise(base, range) {
-  return (base + (Math.random() - 0.5) * range).toFixed(1);
+  return String((base + (Math.random() - 0.5) * range).toFixed(1));
 }
 
 function updateMeasurements() {
