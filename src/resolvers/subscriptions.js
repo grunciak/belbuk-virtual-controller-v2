@@ -2,7 +2,10 @@ const subscriptions = {
   events: {
     subscribe: (_, __, { pubsub }) => {
       console.log('[Subscription] Client subscribed to events');
-      return pubsub.asyncIterator(['CONTROLLER_EVENTS']);
+      const asyncIterable = pubsub.asyncIterableIterator(['CONTROLLER_EVENTS']);
+      // subscriptions-transport-ws needs Symbol.asyncIterator on the object
+      // graphql-subscriptions v2 returns an AsyncGenerator which already has it
+      return asyncIterable;
     },
   },
 };

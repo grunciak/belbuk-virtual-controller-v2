@@ -11,7 +11,7 @@
     "@apollo/server": "^4.11.0",
     "graphql": "^16.9.0",
     "subscriptions-transport-ws": "^0.11.0",
-    "graphql-subscriptions": "^1.2.1",
+    "graphql-subscriptions": "^2.0.0",
     "ws": "^8.18.0",
     "uuid": "^10.0.0",
     "cors": "^2.8.5",
