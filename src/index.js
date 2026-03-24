@@ -26,63 +26,39 @@ async function start() {
   const app = express();
   const httpServer = createServer(app);
 
-  // Wrap subscribe to intercept and log subscription data
-  const wrappedSubscribe = async (...args) => {
-    const result = await subscribe(...args);
-
-    // If it's an async iterator, wrap it to log each value
-    if (result[Symbol.asyncIterator]) {
-      const originalIterator = result[Symbol.asyncIterator]();
-      return {
-        [Symbol.asyncIterator]() {
-          return {
-            async next() {
-              const { value, done } = await originalIterator.next();
-              if (value) {
-                console.log('[Subscription] Raw subscription value:', JSON.stringify(value, null, 2).substring(0, 500));
-                if (value.errors) {
-                  console.error('[Subscription] ERRORS in subscription data:', JSON.stringify(value.errors));
-                }
-                if (value.data && value.data.events === null) {
-                  console.error('[Subscription] events is NULL!');
-                }
-              }
-              return { value, done };
-            },
-            return() {
-              return originalIterator.return ? originalIterator.return() : { value: undefined, done: true };
-            }
-          };
-        }
-      };
-    }
-
-    // If it's an error result
-    if (result.errors) {
-      console.error('[Subscription] Subscribe returned errors:', JSON.stringify(result.errors));
-    }
-    return result;
-  };
-
   // Legacy WebSocket subscription server (subscriptions-transport-ws)
   // Compatible with Apollo Client Java 2.x
   const subscriptionServer = SubscriptionServer.create(
     {
       schema,
       execute,
-      subscribe: wrappedSubscribe,
-      keepAlive: 10000, // Send keep-alive every 10s (Apollo Client Java expects heartbeat)
+      subscribe,
+      keepAlive: 10000, // Send keep-alive every 10s
       onConnect: (connectionParams, webSocket) => {
         console.log('[Subscription] Client connected via WebSocket');
-        console.log('[Subscription] Connection params:', JSON.stringify(connectionParams));
+
+        // WebSocket-level ping every 20s to keep Railway proxy alive
+        const pingInterval = setInterval(() => {
+          if (webSocket.readyState === 1) { // OPEN
+            webSocket.ping();
+          } else {
+            clearInterval(pingInterval);
+          }
+        }, 20000);
+
+        webSocket.on('close', () => {
+          clearInterval(pingInterval);
+          console.log('[Subscription] WebSocket closed, ping stopped');
+        });
+
+        webSocket.on('pong', () => {
+          // Client responded to ping - connection is alive
+        });
+
         return { pubsub };
       },
       onDisconnect: () => {
         console.log('[Subscription] Client disconnected');
-      },
-      onOperation: (message, params) => {
-        console.log('[Subscription] Operation started:', message.payload?.query?.substring(0, 80));
-        return params;
       },
     },
     {
