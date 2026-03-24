@@ -26,12 +26,27 @@ async function start() {
   const app = express();
   const httpServer = createServer(app);
 
+  // Wrap execute to log errors in subscription responses
+  const wrappedExecute = async (...args) => {
+    const result = await execute(...args);
+    if (result.errors) {
+      console.error('[Subscription] GraphQL execution errors:', JSON.stringify(result.errors, null, 2));
+    }
+    if (result.data) {
+      console.log('[Subscription] GraphQL execution data keys:', Object.keys(result.data));
+      if (result.data.events === null) {
+        console.error('[Subscription] events is NULL in response!');
+      }
+    }
+    return result;
+  };
+
   // Legacy WebSocket subscription server (subscriptions-transport-ws)
   // Compatible with Apollo Client Java 2.x
   const subscriptionServer = SubscriptionServer.create(
     {
       schema,
-      execute,
+      execute: wrappedExecute,
       subscribe,
       keepAlive: 10000, // Send keep-alive every 10s (Apollo Client Java expects heartbeat)
       onConnect: (connectionParams, webSocket) => {
