@@ -1,11 +1,17 @@
+const { generateEvent } = require('../simulator/eventGenerator');
+
 const subscriptions = {
   events: {
     subscribe: (_, __, { pubsub }) => {
       console.log('[Subscription] Client subscribed to events');
-      const asyncIterable = pubsub.asyncIterableIterator(['CONTROLLER_EVENTS']);
-      // subscriptions-transport-ws needs Symbol.asyncIterator on the object
-      // graphql-subscriptions v2 returns an AsyncGenerator which already has it
-      return asyncIterable;
+
+      // Send an event shortly after subscription so client gets data quickly
+      setTimeout(() => {
+        console.log('[Subscription] Sending initial event to new subscriber');
+        generateEvent();
+      }, 2000);
+
+      return pubsub.asyncIterableIterator(['CONTROLLER_EVENTS']);
     },
   },
 };
