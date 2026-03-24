@@ -1,8 +1,8 @@
 const { ApolloServer } = require('@apollo/server');
 const { expressMiddleware } = require('@apollo/server/express4');
 const { makeExecutableSchema } = require('@graphql-tools/schema');
-const { WebSocketServer } = require('ws');
-const { useServer } = require('graphql-ws/lib/use/ws');
+const { SubscriptionServer } = require('subscriptions-transport-ws');
+const { execute, subscribe } = require('graphql');
 const { PubSub } = require('graphql-subscriptions');
 const { createServer } = require('http');
 const express = require('express');
@@ -26,18 +26,26 @@ async function start() {
   const app = express();
   const httpServer = createServer(app);
 
-  // WebSocket server for subscriptions
-  const wsServer = new WebSocketServer({
-    server: httpServer,
-    path: GRAPHQL_PATH,
-  });
-
-  const serverCleanup = useServer(
+  // Legacy WebSocket subscription server (subscriptions-transport-ws)
+  // Compatible with Apollo Client Java 2.x
+  const subscriptionServer = SubscriptionServer.create(
     {
       schema,
-      context: () => ({ pubsub }),
+      execute,
+      subscribe,
+      onConnect: (connectionParams, webSocket) => {
+        console.log('[Subscription] Client connected via WebSocket');
+        console.log('[Subscription] Connection params:', JSON.stringify(connectionParams));
+        return { pubsub };
+      },
+      onDisconnect: () => {
+        console.log('[Subscription] Client disconnected');
+      },
     },
-    wsServer
+    {
+      server: httpServer,
+      path: GRAPHQL_PATH,
+    }
   );
 
   const server = new ApolloServer({
@@ -47,7 +55,7 @@ async function start() {
         async serverWillStart() {
           return {
             async drainServer() {
-              await serverCleanup.dispose();
+              subscriptionServer.close();
             },
           };
         },
@@ -75,6 +83,7 @@ async function start() {
     console.log('='.repeat(60));
     console.log(`  GraphQL:     http://localhost:${PORT}${GRAPHQL_PATH}`);
     console.log(`  WebSocket:   ws://localhost:${PORT}${GRAPHQL_PATH}`);
+    console.log(`  Protocol:    subscriptions-transport-ws (legacy)`);
     console.log(`  Health:      http://localhost:${PORT}/health`);
     console.log('='.repeat(60));
     console.log(`  Site ID:     ${process.env.SITE_ID || 'VIRTUAL-001'}`);

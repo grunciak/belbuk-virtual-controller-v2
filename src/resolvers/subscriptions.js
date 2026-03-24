@@ -2,7 +2,7 @@ const subscriptions = {
   events: {
     subscribe: (_, __, { pubsub }) => {
       console.log('[Subscription] Client subscribed to events');
-      return pubsub.asyncIterableIterator(['CONTROLLER_EVENTS']);
+      return pubsub.asyncIterator(['CONTROLLER_EVENTS']);
     },
   },
 };
