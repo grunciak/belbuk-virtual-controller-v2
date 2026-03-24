@@ -11,7 +11,7 @@ const subscriptions = {
         generateEvent();
       }, 2000);
 
-      return pubsub.asyncIterableIterator(['CONTROLLER_EVENTS']);
+      return pubsub.asyncIterator(['CONTROLLER_EVENTS']);
     },
   },
 };
