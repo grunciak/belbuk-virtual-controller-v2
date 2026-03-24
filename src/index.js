@@ -33,6 +33,7 @@ async function start() {
       schema,
       execute,
       subscribe,
+      keepAlive: 10000, // Send keep-alive every 10s (Apollo Client Java expects heartbeat)
       onConnect: (connectionParams, webSocket) => {
         console.log('[Subscription] Client connected via WebSocket');
         console.log('[Subscription] Connection params:', JSON.stringify(connectionParams));
@@ -40,6 +41,10 @@ async function start() {
       },
       onDisconnect: () => {
         console.log('[Subscription] Client disconnected');
+      },
+      onOperation: (message, params) => {
+        console.log('[Subscription] Operation started:', message.payload?.query?.substring(0, 80));
+        return params;
       },
     },
     {
