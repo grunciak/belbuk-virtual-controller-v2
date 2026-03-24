@@ -1,7 +1,7 @@
-const { v4: uuidv4 } = require('uuid');
 const { state } = require('./state');
 
 let pubsub = null;
+let nextExtensionId = 1;
 
 function setPubSub(ps) {
   pubsub = ps;
@@ -12,6 +12,19 @@ function generateEvent() {
   const user = state.users[Math.floor(Math.random() * state.users.length)];
   const point = state.points[Math.floor(Math.random() * state.points.length)];
 
+  // Build point with JSON-formatted value (matching core's JsonBody format)
+  const eventPoint = {
+    id: point.id,
+    name: point.name,
+    type: point.type,
+    family: point.family,
+    created: point.created,
+    value: {
+      type: point.value.type,
+      value: point.value.value, // Already in {"val":"..."} format from measurementGenerator
+    },
+  };
+
   const event = {
     site: state.siteId,
     id: String(state.nextEventId++),
@@ -20,10 +33,10 @@ function generateEvent() {
       type: eventType.code,
       template: eventType.desc,
     },
-    reason: point,
-    points: [point],
+    reason: eventPoint,
+    points: [eventPoint],
     extensions: [
-      { id: uuidv4(), type: eventType.code, value: eventType.symbol },
+      { id: String(nextExtensionId++), type: eventType.code, value: eventType.symbol },
     ],
     user: eventType.code === 5 || eventType.code === 6 || eventType.code === 7 ? user : null,
     operator: null,
@@ -33,7 +46,6 @@ function generateEvent() {
 
   if (pubsub) {
     const payload = { events: [event] };
-    console.log('[Event] Publishing payload:', JSON.stringify(payload, null, 2));
     pubsub.publish('CONTROLLER_EVENTS', payload);
   }
 
