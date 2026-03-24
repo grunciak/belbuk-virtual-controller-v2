@@ -1,7 +1,12 @@
 const { state } = require('./state');
 
 function randomNoise(base, range) {
-  return String((base + (Math.random() - 0.5) * range).toFixed(1));
+  return (base + (Math.random() - 0.5) * range).toFixed(1);
+}
+
+// Format value as JSON string like real controllers: {"val":"22.8"}
+function jsonVal(val) {
+  return JSON.stringify({ val: String(val) });
 }
 
 function updateMeasurements() {
@@ -9,28 +14,28 @@ function updateMeasurements() {
     switch (point.family) {
       case 'TEMPERATURE':
         if (point.name.includes('serwerownia')) {
-          point.value = { type: 'DOUBLE', value: randomNoise(19.5, 3) };
+          point.value = { type: 'DOUBLE', value: jsonVal(randomNoise(19.5, 3)) };
         } else if (point.name.includes('parking')) {
-          point.value = { type: 'DOUBLE', value: randomNoise(14, 8) };
+          point.value = { type: 'DOUBLE', value: jsonVal(randomNoise(14, 8)) };
         } else {
-          point.value = { type: 'DOUBLE', value: randomNoise(22, 4) };
+          point.value = { type: 'DOUBLE', value: jsonVal(randomNoise(22, 4)) };
         }
         break;
       case 'HUMIDITY':
         if (point.name.includes('serwerownia')) {
-          point.value = { type: 'DOUBLE', value: randomNoise(38, 10) };
+          point.value = { type: 'DOUBLE', value: jsonVal(randomNoise(38, 10)) };
         } else {
-          point.value = { type: 'DOUBLE', value: randomNoise(45, 15) };
+          point.value = { type: 'DOUBLE', value: jsonVal(randomNoise(45, 15)) };
         }
         break;
       case 'VOLTAGE':
-        point.value = { type: 'DOUBLE', value: randomNoise(230, 6) };
+        point.value = { type: 'DOUBLE', value: jsonVal(randomNoise(230, 6)) };
         break;
       case 'DOOR':
-        point.value = { type: 'BOOLEAN', value: Math.random() < 0.1 ? 'true' : 'false' };
+        point.value = { type: 'BOOLEAN', value: jsonVal(Math.random() < 0.1 ? 'true' : 'false') };
         break;
       case 'MOTION':
-        point.value = { type: 'BOOLEAN', value: Math.random() < 0.2 ? 'true' : 'false' };
+        point.value = { type: 'BOOLEAN', value: jsonVal(Math.random() < 0.2 ? 'true' : 'false') };
         break;
     }
   }

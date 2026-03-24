@@ -170,16 +170,16 @@ const users = [
 ];
 
 const points = [
-  { id: '1', name: 'Temperatura - hol', type: 'ANALOG', family: 'TEMPERATURE', created: '2024-01-01T00:00:00Z', value: { type: 'DOUBLE', value: '21.5' } },
-  { id: '2', name: 'Temperatura - serwerownia', type: 'ANALOG', family: 'TEMPERATURE', created: '2024-01-01T00:00:00Z', value: { type: 'DOUBLE', value: '19.2' } },
-  { id: '3', name: 'Temperatura - parking', type: 'ANALOG', family: 'TEMPERATURE', created: '2024-01-01T00:00:00Z', value: { type: 'DOUBLE', value: '12.8' } },
-  { id: '4', name: 'Wilgotnosc - hol', type: 'ANALOG', family: 'HUMIDITY', created: '2024-01-01T00:00:00Z', value: { type: 'DOUBLE', value: '45.0' } },
-  { id: '5', name: 'Wilgotnosc - serwerownia', type: 'ANALOG', family: 'HUMIDITY', created: '2024-01-01T00:00:00Z', value: { type: 'DOUBLE', value: '38.5' } },
-  { id: '6', name: 'Napiecie - zasilacz glowny', type: 'ANALOG', family: 'VOLTAGE', created: '2024-01-01T00:00:00Z', value: { type: 'DOUBLE', value: '230.1' } },
-  { id: '7', name: 'Napiecie - zasilacz UPS', type: 'ANALOG', family: 'VOLTAGE', created: '2024-01-01T00:00:00Z', value: { type: 'DOUBLE', value: '231.4' } },
-  { id: '8', name: 'Drzwi - wejscie glowne', type: 'BINARY', family: 'DOOR', created: '2024-01-01T00:00:00Z', value: { type: 'BOOLEAN', value: 'false' } },
-  { id: '9', name: 'Drzwi - wejscie techniczne', type: 'BINARY', family: 'DOOR', created: '2024-01-01T00:00:00Z', value: { type: 'BOOLEAN', value: 'false' } },
-  { id: '10', name: 'Czujnik ruchu - hol', type: 'BINARY', family: 'MOTION', created: '2024-01-01T00:00:00Z', value: { type: 'BOOLEAN', value: 'false' } },
+  { id: '1', name: 'Temperatura - hol', type: 'ANALOG', family: 'TEMPERATURE', created: '2024-01-01T00:00:00Z', value: { type: 'DOUBLE', value: '{"val":"21.5"}' } },
+  { id: '2', name: 'Temperatura - serwerownia', type: 'ANALOG', family: 'TEMPERATURE', created: '2024-01-01T00:00:00Z', value: { type: 'DOUBLE', value: '{"val":"19.2"}' } },
+  { id: '3', name: 'Temperatura - parking', type: 'ANALOG', family: 'TEMPERATURE', created: '2024-01-01T00:00:00Z', value: { type: 'DOUBLE', value: '{"val":"12.8"}' } },
+  { id: '4', name: 'Wilgotnosc - hol', type: 'ANALOG', family: 'HUMIDITY', created: '2024-01-01T00:00:00Z', value: { type: 'DOUBLE', value: '{"val":"45.0"}' } },
+  { id: '5', name: 'Wilgotnosc - serwerownia', type: 'ANALOG', family: 'HUMIDITY', created: '2024-01-01T00:00:00Z', value: { type: 'DOUBLE', value: '{"val":"38.5"}' } },
+  { id: '6', name: 'Napiecie - zasilacz glowny', type: 'ANALOG', family: 'VOLTAGE', created: '2024-01-01T00:00:00Z', value: { type: 'DOUBLE', value: '{"val":"230.1"}' } },
+  { id: '7', name: 'Napiecie - zasilacz UPS', type: 'ANALOG', family: 'VOLTAGE', created: '2024-01-01T00:00:00Z', value: { type: 'DOUBLE', value: '{"val":"231.4"}' } },
+  { id: '8', name: 'Drzwi - wejscie glowne', type: 'BINARY', family: 'DOOR', created: '2024-01-01T00:00:00Z', value: { type: 'BOOLEAN', value: '{"val":"false"}' } },
+  { id: '9', name: 'Drzwi - wejscie techniczne', type: 'BINARY', family: 'DOOR', created: '2024-01-01T00:00:00Z', value: { type: 'BOOLEAN', value: '{"val":"false"}' } },
+  { id: '10', name: 'Czujnik ruchu - hol', type: 'BINARY', family: 'MOTION', created: '2024-01-01T00:00:00Z', value: { type: 'BOOLEAN', value: '{"val":"false"}' } },
 ];
 
 const groups = [
