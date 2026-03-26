@@ -9,17 +9,20 @@ const mutations = {
   confirmEvent: (_, { id }) => {
     console.log(`[Mutation] confirmEvent: ${id}`);
     return id.map(eventId => {
-      // First try exact match by local ID
-      let idx = state.unconfirmedEvents.findIndex(e => String(e.id) === String(eventId));
+      const eid = String(eventId);
 
-      // If not found, Belbuk sends rekeyed ID (from eventExtensions) —
-      // remove oldest unconfirmed event instead (confirms come in order)
-      if (idx < 0 && state.unconfirmedEvents.length > 0) {
-        idx = 0;
+      // Match by event ID
+      let idx = state.unconfirmedEvents.findIndex(e => String(e.id) === eid);
+
+      // Match by extension ID (Belbuk uses rekeyed extension ID for confirm)
+      if (idx < 0) {
+        idx = state.unconfirmedEvents.findIndex(e =>
+          e.extensions?.some(ext => String(ext.id) === eid)
+        );
       }
 
       if (idx >= 0) {
-        const removed = state.unconfirmedEvents.splice(idx, 1)[0];
+        state.unconfirmedEvents.splice(idx, 1);
         return { id: eventId, status: 'CONFIRMED' };
       }
       return { id: eventId, status: 'NOT_FOUND' };
