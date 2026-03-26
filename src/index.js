@@ -109,33 +109,30 @@ async function start() {
         // Register client for tracking
         trackClient(webSocket);
 
-        // Mark as not yet subscribed — if no subscription starts in 30s, force close
-        // This prevents "zombie" connections where client connects but never subscribes
+        // Track subscription state on this socket
         webSocket._hasSubscription = false;
-        const subscriptionTimeout = setTimeout(() => {
+
+        // If no subscription operation within 30s, force close to trigger reconnect
+        webSocket._subscriptionTimeout = setTimeout(() => {
           if (!webSocket._hasSubscription && webSocket.readyState === 1) {
-            console.log('[Subscription] Client connected but never subscribed after 30s — forcing close to trigger reconnect');
+            console.log('[Subscription] ZOMBIE: connected but no subscription after 30s — closing');
             try { webSocket.close(4000, 'No subscription started'); } catch {}
           }
         }, 30000);
 
-        webSocket.on('close', () => clearTimeout(subscriptionTimeout));
-
-        // Listen for GQL_START messages (subscription operations)
-        const origOnMessage = webSocket.onmessage;
-        webSocket.on('message', (data) => {
-          try {
-            const msg = JSON.parse(data.toString());
-            if (msg.type === 'start' || msg.type === 'subscribe') {
-              webSocket._hasSubscription = true;
-              clearTimeout(subscriptionTimeout);
-              console.log('[Subscription] Client started subscription operation');
-            }
-          } catch {}
-        });
-
         console.log(`[Subscription] Active clients: ${activeClients.size}`);
         return { pubsub };
+      },
+      // Called when client sends GQL_START (subscription operation)
+      onOperation: (message, params, webSocket) => {
+        if (webSocket._subscriptionTimeout) {
+          clearTimeout(webSocket._subscriptionTimeout);
+          webSocket._subscriptionTimeout = null;
+        }
+        webSocket._hasSubscription = true;
+        const query = (message.payload?.query || '').substring(0, 80);
+        console.log(`[Subscription] Operation started: ${query}`);
+        return params;
       },
       onDisconnect: (webSocket) => {
         activeClients.delete(webSocket);
