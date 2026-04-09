@@ -19,62 +19,43 @@ const PORT = parseInt(process.env.PORT) || 2001;
 const GRAPHQL_PATH = process.env.GRAPHQL_PATH || '/api/graphql.php';
 
 // ===========================================================================
-// WebSocket connection tracker — prevents Railway proxy from closing idle
-// connections and detects dead clients for cleanup
+// WebSocket connection tracker — keeps Railway proxy alive via TCP ping,
+// but NEVER terminates clients (Java/supervisor-center doesn't respond to
+// TCP pong, and doesn't auto-reconnect if we kill the connection)
 // ===========================================================================
 const activeClients = new Set();
-let lastPongTime = new Map(); // webSocket → timestamp of last pong
 
 function trackClient(webSocket) {
   activeClients.add(webSocket);
-  lastPongTime.set(webSocket, Date.now());
 
-  // --- Level 1: TCP-level ping every 8 seconds ---
-  // Railway proxy sees TCP activity and keeps connection alive
+  // TCP-level ping every 25 seconds — keeps Railway proxy alive
+  // (Railway closes idle connections after ~30s without TCP activity)
+  // We do NOT check for pong — Java clients may not respond to TCP ping,
+  // and GraphQL-level keepAlive frames (ka every 5s) serve as the real
+  // liveness signal via the subscriptions-transport-ws protocol
   const pingInterval = setInterval(() => {
     if (webSocket.readyState === 1) { // OPEN
       try {
         webSocket.ping();
       } catch (err) {
-        console.log('[WS] Ping failed, cleaning up');
+        console.log('[WS] Ping send failed, client likely gone');
         cleanup();
       }
     } else {
       cleanup();
     }
-  }, 8000);
+  }, 25000);
 
-  // --- Level 2: Stale connection detector every 30 seconds ---
-  // If no pong received in 60s, client is dead — force close
-  const staleCheckInterval = setInterval(() => {
-    const lastPong = lastPongTime.get(webSocket) || 0;
-    const elapsed = Date.now() - lastPong;
-    if (elapsed > 60000 && webSocket.readyState === 1) {
-      console.log(`[WS] No pong for ${Math.round(elapsed/1000)}s — forcing close`);
-      try { webSocket.terminate(); } catch {}
-      cleanup();
-    }
-  }, 30000);
-
-  // Listen for pong responses
-  webSocket.on('pong', () => {
-    lastPongTime.set(webSocket, Date.now());
-  });
-
-  // Cleanup on close
   webSocket.on('close', () => cleanup());
-  webSocket.on('error', () => cleanup());
+  webSocket.on('error', (err) => {
+    console.log(`[WS] Error: ${err.message}`);
+    cleanup();
+  });
 
   function cleanup() {
     clearInterval(pingInterval);
-    clearInterval(staleCheckInterval);
     activeClients.delete(webSocket);
-    lastPongTime.delete(webSocket);
   }
-}
-
-function hasActiveClients() {
-  return activeClients.size > 0;
 }
 
 async function start() {
@@ -109,34 +90,17 @@ async function start() {
         // Register client for tracking
         trackClient(webSocket);
 
-        // Track subscription state on this socket
-        webSocket._hasSubscription = false;
-
-        // If no subscription operation within 30s, force close to trigger reconnect
-        webSocket._subscriptionTimeout = setTimeout(() => {
-          if (!webSocket._hasSubscription && webSocket.readyState === 1) {
-            console.log('[Subscription] ZOMBIE: connected but no subscription after 30s — closing');
-            try { webSocket.close(4000, 'No subscription started'); } catch {}
-          }
-        }, 30000);
-
         console.log(`[Subscription] Active clients: ${activeClients.size}`);
         return { pubsub };
       },
       // Called when client sends GQL_START (subscription operation)
-      onOperation: (message, params, webSocket) => {
-        if (webSocket._subscriptionTimeout) {
-          clearTimeout(webSocket._subscriptionTimeout);
-          webSocket._subscriptionTimeout = null;
-        }
-        webSocket._hasSubscription = true;
+      onOperation: (message, params) => {
         const query = (message.payload?.query || '').substring(0, 80);
         console.log(`[Subscription] Operation started: ${query}`);
         return params;
       },
       onDisconnect: (webSocket) => {
         activeClients.delete(webSocket);
-        lastPongTime.delete(webSocket);
         console.log(`[Subscription] Client disconnected. Active clients: ${activeClients.size}`);
       },
     },
